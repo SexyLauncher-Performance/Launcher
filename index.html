@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <link rel="icon" href="assets/icon.png" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SexyLauncherPerformance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #ffffff;
+            --secondary-color: #1a1a1a;
+            --accent-color: #333333;
+            --hover-color: #444444;
+            --selected-color: #ffffff;
+            --selected-text-color: #000000;
+            --background-opacity: 0.2;
+            --font-family: 'Roboto', sans-serif;
+            --title-font-size: 3rem;
+            --button-padding: 10px 20px;
+            --popup-width: 220px;
+            --popup-padding: 15px;
+            --account-button-padding: 2px 2px;
+            --account-button-font-size: 0.9rem;
+            --manage-button-font-size: 0.8rem;
+            --input-padding: 10px;
+            --input-font-size: 1rem;
+            --select-padding: 10px;
+            --select-font-size: 1rem;
+            --select-background-color: var(--secondary-color);
+            --select-color: var(--primary-color);
+            --select-border: 1px solid var(--primary-color);
+            --select-border-radius: 8px;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--primary-color);
+            position: relative;
+            background: radial-gradient(circle at center, #1a1a1a, #000000);
+        }
+
+        .dynamic-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e1e1e, #2c2c2c, #1e1e1e, #2c2c2c);
+            background-size: 400% 400%;
+            animation: gradientAnimation 30s ease infinite;
+            z-index: -1;
+            opacity: var(--background-opacity);
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .title {
+            font-size: var(--title-font-size);
+            color: var(--primary-color);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.2s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px; /* Adjusted to position below the title */
+        }
+
+        input, select {
+            padding: var(--input-padding);
+            width: 100%;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            font-size: var(--input-font-size);
+            transition: border 0.3s, box-shadow 0.3s;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            padding: var(--button-padding);
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            background-color: var(--secondary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+            display: flex;
+            align-items: center;
+            margin: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            background-color: #111111;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background-color: var(--secondary-color);
+        }
+
+        button i {
+            margin-right: 8px;
+        }
+
+        .footer {
+            margin-top: 0px;
+            padding-top: 0px;
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+
+        #progressContainer {
+            display: none;
+            margin-top: 2px;
+            margin-bottom: 0px;
+            padding-bottom: 0px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #progressBar {
+            width: 100%;
+            background-color: #333333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #progressFill {
+            width: 0%;
+            height: 25px;
+            background-color: #ffffff;
+            transition: width 0.4s ease;
+        }
+
+        .manage-accounts-popup {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(34, 34, 34, 0.95);
+            padding: var(--popup-padding);
+            border-radius: 12px;
+            width: var(--popup-width);
+            z-index: 100;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+        }
+
+        .manage-accounts-popup.active {
+            display: block;
+        }
+
+        .manage-accounts-popup h2 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+        }
+
+        .manage-accounts-popup input {
+            width: 100%;
+            margin-bottom: 10px;
+            border: none;
+            padding: var(--input-padding);
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            font-size: var(--input-font-size);
+            box-sizing: border-box;
+        }
+
+        .account-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .account-item {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--accent-color);
+            border: none;
+            padding: 6px;
+            margin: 2px;
+            border-radius: 8px;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .account-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .account-item.selected {
+            background-color: var(--selected-color);
+            color: var(--selected-text-color);
+        }
+
+        .account-item .delete-btn {
+            background-color: transparent;
+            color: darkred;
+            border: none;
+            box-shadow: none;
+            transform: scale(2.5);
+            cursor: pointer;
+        }
+
+        .account-item .delete-btn:hover {
+            color: #ff0000;
+        }
+
+        .game-files-btn, .youtube-btn {
+            position: absolute;
+            bottom: 15px;
+            border-radius: 50%;
+            background-color: rgba(34, 34, 34, 0.9);
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 24px;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .game-files-btn {
+            right: 15px;
+        }
+
+        .youtube-btn {
+            left: 15px;
+            filter: grayscale(100%);
+        }
+
+        .youtube-btn:hover {
+            filter: grayscale(0%);
+        }
+
+        .game-files-btn:hover, .youtube-btn:hover {
+            transform: scale(1.1);
+        }
+
+        #updateNotification {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(34, 34, 34, 0.95);
+            color: var(--primary-color);
+            text-align: center;
+            padding: 15px;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+        }
+
+        #updateMessage {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        #restartButton {
+            margin-top: 10px;
+            padding: var(--button-padding);
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            background-color: var(--secondary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+            display: inline-block;
+        }
+
+        #restartButton:hover {
+            transform: translateY(-2px);
+            background-color: #111111;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+        }
+
+        #restartButton:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background-color: var(--secondary-color);
+        }
+
+        #updateProgressBar {
+            width: 80%;
+            margin: 15px auto;
+            height: 20px;
+            background-color: #333333;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            position: relative;
+        }
+
+        #updateProgressFill {
+            width: 0%;
+            height: 100%;
+            background-color: #ffffff;
+            transition: width 0.4s ease;
+            text-align: center;
+            line-height: 20px;
+            color: #000000;
+            font-size: 0.8rem;
+        }
+
+        #updateMBs {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            input, select {
+                width: 80%;
+            }
+
+            button {
+                width: 80%;
+                justify-content: center;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .manage-accounts-popup {
+                width: 70%;
+            }
+
+            .account-item {
+                padding: 6px;
+                font-size: 0.8rem;
+            }
+
+            .account-item .delete-btn {
+                padding: 1px 2px;
+                font-size: 0.5rem;
+                width: 18px;
+                height: 18px;
+                top: 2px;
+                right: 2px;
+            }
+
+            .game-files-btn, .youtube-btn {
+                width: 35px;
+                height: 35px;
+                padding: 6px;
+                border: none;
+                box-shadow: none;
+                background-color: transparent;
+            }
+        }
+
+        /* Gear Icon Button */
+        #optionsButton {
+            background: transparent;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #optionsButton:hover {
+            color: #cccccc;
+        }
+
+        /* Options Popup */
+        .options-popup {
+            display: none;
+            position: absolute;
+            top: 100px;
+            right: 0;
+            background-color: rgba(34, 34, 34, 0.95);
+            padding: var(--popup-padding);
+            border-radius: 12px;
+            width: var(--popup-width);
+            z-index: 100;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+        }
+
+        .options-popup.active {
+            display: block;
+        }
+
+        .options-popup h2 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            text-align: left;
+        }
+
+        .options-popup label {
+            display: block;
+            margin-bottom: 5px;
+            text-align: left;
+            color: var(--primary-color);
+        }
+
+        .options-popup input {
+            width: 100%;
+            margin-bottom: 10px;
+            border: none;
+            padding: var(--input-padding);
+            border-radius: 6px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            font-size: var(--input-font-size);
+            box-sizing: border-box;
+        }
+
+        .options-popup button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Add these new styles for error animations */
+
+        /* Keyframes for red glowing effect */
+        @keyframes glow-red {
+            0% { box-shadow: 0 0 5px red; }
+            50% { box-shadow: 0 0 20px red; }
+            100% { box-shadow: 0 0 5px red; }
+        }
+
+        /* Keyframes for vibration effect */
+        @keyframes vibrate {
+            0% { transform: translate(0px, 0px); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0px, 0px); }
+        }
+
+        /* Combined class for error effect */
+        .manage-accounts-error {
+            animation: glow-red 0.3s ease-in-out, vibrate 0.1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div class="dynamic-background"></div>
+<h1 class="title" id="mainTitle"><i class="fas fa-gamepad"></i> SexyLauncher</h1>
+<div class="button-container">
+    <button id="launchButton"><i class="fas fa-play"></i> Play Now!</button>
+    <button id="optionsButton"><i class="fas fa-cog"></i></button>
+</div>
+<br>
+<button id="manageAccountsButton"><i class="fas fa-users"></i> Manage Accounts</button>
+<br>
+<select id="versionSelector">
+    <option value="" disabled selected>Select Minecraft Version</option>
+    <option value="fabric 1.21.5s">Fabric 1.21.5 Sodium</option>
+    <option value="fabric 1.21.4">Fabric 1.21.4 Vulkan</option>
+    <option value="fabric 1.21.4s">Fabric 1.21.4 Sodium</option>
+</select>
+<div class="manage-accounts-popup" id="manageAccountsPopup">
+    <h2>Manage Accounts</h2>
+    <input id="newAccountInput" type="text" placeholder="Enter the account name" maxlength="26">
+    <button id="addAccountButton">+ Add</button>
+    <!-- Microsoft Login Button -->
+    <button id="microsoftLoginButton" style="background:#2a5bda;color:#fff;margin-top:10px;">
+        <i class="fab fa-microsoft"></i> Sign in with Microsoft
+    </button>
+    <br>
+    <div class="account-list" id="accountList"></div>
+    <br>
+    <button class="close-btn" id="closeManageAccountsButton">Close</button>
+</div>
+<div class="options-popup" id="optionsPopup">
+    <h2>Options</h2>
+    <label for="minRam">Minimum RAM (e.g., 2G):</label>
+    <input type="text" id="minRam" placeholder="e.g., 2G" maxlength="4">
+    <label for="maxRam">Maximum RAM (e.g., 4G):</label>
+    <input type="text" id="maxRam" placeholder="e.g., 4G" maxlength="4">
+    <button id="saveRamButton"><i class="fas fa-save"></i> Save</button>
+</div>
+<div id="progressContainer">
+    <p>Please Wait Sexy: <span id="progressPercent">0%</span></p>
+    <div id="progressBar">
+        <div id="progressFill"></div>
+    </div>
+</div>
+<button class="game-files-btn" id="gameFilesBtn">
+    <i class="fas fa-folder"></i>
+</button>
+<button class="youtube-btn" id="youtubeBtn" title="Visit Our YouTube Channel">
+    <i class="fab fa-youtube"></i>
+</button>
+<div class="footer">
+    <p>v1.5.0-beta</p>
+</div>
+<div id="updateNotification">
+    <p id="updateMessage"></p>
+    <div id="updateProgressBar">
+        <div id="updateProgressFill"></div>
+    </div>
+    <p id="updateMBs">Downloaded: 0 MB / 0 MB</p>
+    <button id="restartButton" style="display: none;">Restart Now</button>
+</div>
+<script>
+    // --- Variable Setup ---
+    const manageAccountsButton = document.getElementById('manageAccountsButton');
+    const manageAccountsPopup = document.getElementById('manageAccountsPopup');
+    const closeManageAccountsButton = document.getElementById('closeManageAccountsButton');
+    const accountList = document.getElementById('accountList');
+    const addAccountButton = document.getElementById('addAccountButton');
+    const newAccountInput = document.getElementById('newAccountInput');
+    const launchButton = document.getElementById('launchButton');
+    const gameFilesBtn = document.getElementById('gameFilesBtn');
+    const youtubeBtn = document.getElementById('youtubeBtn');
+    const mainTitle = document.getElementById('mainTitle');
+    const versionSelector = document.getElementById('versionSelector');
+    const optionsButton = document.getElementById('optionsButton');
+    const optionsPopup = document.getElementById('optionsPopup');
+    const saveRamButton = document.getElementById('saveRamButton');
+    const minRamInput = document.getElementById('minRam');
+    const maxRamInput = document.getElementById('maxRam');
+    const microsoftLoginButton = document.getElementById('microsoftLoginButton');
+
+    let selectedAccount = localStorage.getItem('selectedAccount') || null;
+    let selectedVersion = localStorage.getItem('selectedVersion') || null;
+    let msProfile = null;
+    try { msProfile = JSON.parse(localStorage.getItem('msProfile')) || null; } catch {}
+
+    const MAX_ACCOUNTS = 3;
+
+    // --- Microsoft login button logic ---
+    if (microsoftLoginButton) {
+        microsoftLoginButton.addEventListener('click', async () => {
+            microsoftLoginButton.disabled = true;
+            microsoftLoginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+            try {
+                const result = await window.electron.invoke('login-microsoft');
+                if (result.success && result.profile) {
+                    msProfile = result.profile;
+                    localStorage.setItem('msProfile', JSON.stringify(msProfile));
+                    selectedAccount = msProfile.username;
+                    localStorage.setItem('selectedAccount', selectedAccount);
+                    loadAccounts();
+                    alert('Microsoft login successful!');
+                } else {
+                    alert('Microsoft login failed: ' + (result.message || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Microsoft login failed.');
+            }
+            microsoftLoginButton.disabled = false;
+            microsoftLoginButton.innerHTML = '<i class="fab fa-microsoft"></i> Sign in with Microsoft';
+        });
+    }
+
+    manageAccountsButton.addEventListener('click', () => {
+        manageAccountsPopup.classList.add('active');
+        loadAccounts();
+    });
+
+    closeManageAccountsButton.addEventListener('click', () => {
+        manageAccountsPopup.classList.remove('active');
+    });
+
+    optionsButton.addEventListener('click', () => {
+        optionsPopup.classList.toggle('active');
+        if (optionsPopup.classList.contains('active')) {
+            window.electron.getRamAllocation().then(ram => {
+                minRamInput.value = ram.min;
+                maxRamInput.value = ram.max;
+            });
+        }
+    });
+
+    function loadAccounts() {
+        accountList.innerHTML = '';
+        // Microsoft account
+        if (msProfile && msProfile.username) {
+            const accountItem = document.createElement('div');
+            accountItem.classList.add('account-item');
+            if (selectedAccount === msProfile.username) accountItem.classList.add('selected');
+            accountItem.innerHTML = `
+                <span><i class="fab fa-microsoft" style="color:#2a5bda;margin-right:5px;"></i>${msProfile.username} <small>(Microsoft)</small></span>
+                <button class="delete-btn" title="Log Out"><i class="fas fa-sign-out-alt"></i></button>
+            `;
+            // Log out Microsoft
+            accountItem.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await window.electron.invoke('logout-microsoft');
+                msProfile = null;
+                localStorage.removeItem('msProfile');
+                if (selectedAccount === msProfile?.username) {
+                    selectedAccount = null;
+                    localStorage.removeItem('selectedAccount');
+                }
+                loadAccounts();
+            });
+            accountItem.addEventListener('click', () => {
+                selectedAccount = msProfile.username;
+                localStorage.setItem('selectedAccount', selectedAccount);
+                window.electron.setSelectedVersion(selectedVersion);
+                document.querySelectorAll('.account-item').forEach(item => item.classList.remove('selected'));
+                accountItem.classList.add('selected');
+            });
+            accountList.appendChild(accountItem);
+        }
+        // Cracked accounts
+        const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+        accounts.forEach(account => {
+            const accountItem = document.createElement('div');
+            accountItem.classList.add('account-item');
+            if (account.username === selectedAccount) accountItem.classList.add('selected');
+            accountItem.innerHTML = `
+                <span>${account.username}</span>
+                <button class="delete-btn" title="Delete Account"><i class="fas fa-trash-alt"></i></button>
+            `;
+            accountItem.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newAccounts = accounts.filter(acc => acc.username !== account.username);
+                localStorage.setItem('accounts', JSON.stringify(newAccounts));
+                if (selectedAccount === account.username) {
+                    selectedAccount = null;
+                    localStorage.removeItem('selectedAccount');
+                }
+                loadAccounts();
+            });
+            accountItem.addEventListener('click', () => {
+                selectedAccount = account.username;
+                localStorage.setItem('selectedAccount', selectedAccount);
+                window.electron.setSelectedVersion(selectedVersion);
+                document.querySelectorAll('.account-item').forEach(item => item.classList.remove('selected'));
+                accountItem.classList.add('selected');
+            });
+            accountList.appendChild(accountItem);
+        });
+    }
+
+    addAccountButton.addEventListener('click', () => {
+        const newAccountName = newAccountInput.value.trim();
+        if (!newAccountName) return;
+        if (newAccountName.length > 26) return;
+        const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+        if (accounts.length >= MAX_ACCOUNTS) return;
+        if (accounts.some(acc => acc.username.toLowerCase() === newAccountName.toLowerCase())) return;
+        accounts.push({ username: newAccountName });
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+        loadAccounts();
+        newAccountInput.value = '';
+    });
+
+    versionSelector.addEventListener('change', () => {
+        selectedVersion = versionSelector.value;
+        localStorage.setItem('selectedVersion', selectedVersion);
+        window.electron.setSelectedVersion(selectedVersion);
+    });
+
+    window.addEventListener('load', () => {
+        if (selectedVersion) versionSelector.value = selectedVersion;
+    });
+
+    launchButton.addEventListener('click', () => {
+        const version = selectedVersion;
+        if (selectedAccount && version) {
+            let useMicrosoft = (msProfile && selectedAccount === msProfile.username);
+            if (window.electron && window.electron.launchGame) {
+                window.electron.launchGame({
+                    username: selectedAccount,
+                    version: version,
+                    useMicrosoft: useMicrosoft
+                });
+            }
+            document.getElementById('progressContainer').style.display = 'block';
+        } else {
+            const manageAccountsBtn = document.getElementById('manageAccountsButton');
+            manageAccountsBtn.classList.add('manage-accounts-error');
+            setTimeout(() => {
+                manageAccountsBtn.classList.remove('manage-accounts-error');
+            }, 500);
+        }
+    });
+
+    saveRamButton.addEventListener('click', () => {
+        const minRam = minRamInput.value.trim();
+        const maxRam = maxRamInput.value.trim();
+        const ramRegex = /^\d+G$/i;
+        if (!ramRegex.test(minRam) || !ramRegex.test(maxRam)) return;
+        if (parseInt(maxRam) < parseInt(minRam)) return;
+        window.electron.setRamAllocation({ min: minRam.toUpperCase(), max: maxRam.toUpperCase() });
+        optionsPopup.classList.remove('active');
+    });
+
+    youtubeBtn.addEventListener('click', () => {
+        window.open('https://www.youtube.com/@SheldersonGD', '_blank');
+    });
+
+    gameFilesBtn.addEventListener('click', () => {
+        if (window.electron && window.electron.openGameFiles) {
+            window.electron.openGameFiles();
+        }
+    });
+
+    loadAccounts();
+
+    window.electron && window.electron.on('progress-update', (percentage) => {
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        progressFill.style.width = `${percentage}%`;
+        progressPercent.textContent = `${percentage}%`;
+        if (percentage === 100) document.getElementById('progressContainer').style.display = 'none';
+    });
+
+    window.electron && window.electron.on('debug-log', (log) => {
+        console.log(`[DEBUG] ${log}`);
+    });
+
+    window.electron && window.electron.on('data-log', (data) => {
+        console.log(`[DATA] ${JSON.stringify(data)}`);
+    });
+
+    window.electron && window.electron.on('update_available', (info) => {
+        const updateNotification = document.getElementById('updateNotification');
+        const updateMessage = document.getElementById('updateMessage');
+        updateMessage.innerText = 'A new update is available. Downloading now...';
+        updateNotification.style.display = 'block';
+        document.getElementById('updateProgressBar').style.display = 'block';
+        document.getElementById('updateMBs').style.display = 'block';
+        document.getElementById('updateMBs').textContent = 'Downloaded: 0 MB / 0 MB';
+        document.getElementById('updateProgressFill').style.width = '0%';
+        document.getElementById('updateProgressFill').textContent = '0%';
+        document.getElementById('restartButton').style.display = 'none';
+    });
+
+    window.electron && window.electron.on('update_download_progress', (data) => {
+        const updateProgressFill = document.getElementById('updateProgressFill');
+        const updateMBs = document.getElementById('updateMBs');
+        const percentage = Math.floor(data.percent);
+        const transferredMB = (data.transferred / (1024 * 1024)).toFixed(2);
+        const totalMB = (data.total / (1024 * 1024)).toFixed(2);
+        const remainingMB = (data.total - data.transferred) / (1024 * 1024);
+        updateProgressFill.style.width = `${percentage}%`;
+        updateProgressFill.textContent = `${percentage}%`;
+        updateMBs.textContent = `Downloaded: ${transferredMB} MB / ${totalMB} MB (${remainingMB.toFixed(2)} MB left)`;
+    });
+
+    window.electron && window.electron.on('update_downloaded', (info) => {
+        const updateMessage = document.getElementById('updateMessage');
+        const restartButton = document.getElementById('restartButton');
+        updateMessage.innerText = 'Update downloaded. It will be installed on restart. Restart now?';
+        restartButton.style.display = 'inline-block';
+        document.getElementById('updateProgressBar').style.display = 'none';
+        document.getElementById('updateMBs').style.display = 'none';
+    });
+
+    window.electron && window.electron.on('update_not_available', (info) => {
+        console.log('You are using the latest version.');
+    });
+
+    window.electron && window.electron.on('update_error', (error) => {
+        console.error('Error during update:', error);
+        const updateMessage = document.getElementById('updateMessage');
+        updateMessage.innerText = 'Error checking for updates.';
+        const updateNotification = document.getElementById('updateNotification');
+        updateNotification.style.display = 'block';
+        document.getElementById('updateProgressBar').style.display = 'none';
+        document.getElementById('updateMBs').style.display = 'none';
+        document.getElementById('restartButton').style.display = 'none';
+    });
+
+    document.getElementById('restartButton').addEventListener('click', () => {
+        window.electron && window.electron.restartApp();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        const title = mainTitle;
+        const rect = title.getBoundingClientRect();
+        const titleX = rect.left + rect.width / 2;
+        const titleY = rect.top + rect.height / 2;
+        const deltaX = (e.clientX - titleX) / 20;
+        const deltaY = (e.clientY - titleY) / 20;
+        const maxOffset = 10;
+        const offsetX = Math.max(Math.min(deltaX, maxOffset), -maxOffset);
+        const offsetY = Math.max(Math.min(deltaY, maxOffset), -maxOffset);
+        title.style.transform = `translate(-50%, -50%) translate(${offsetX}px, ${offsetY}px)`;
+    });
+
+    window.addEventListener('load', () => {
+        mainTitle.style.transform = `translate(-50%, -50%)`;
+    });
+</script>
+</body>
+</html>
